@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>验证页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        /* 初始页面（浅绿背景） */
+        body {
+            background-color: #e8f5e9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        /* 木质锁盒样式 */
+        .lock-box {
+            width: 220px;
+            height: 280px;
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3), inset 0 0 10px rgba(0,0,0,0.2);
+            transition: transform 0.4s;
+            border: 2px solid #6D3C11;
+        }
+        .lock-box:hover {
+            transform: scale(1.08);
+        }
+        .lock-box::before {
+            content: "";
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 6px solid #6D3C11;
+            border-radius: 50%;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #A0522D, #8B4513);
+        }
+        .lock-box::after {
+            content: "";
+            position: absolute;
+            width: 25px;
+            height: 35px;
+            background-color: #6D3C11;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 4px 4px 0 0;
+        }
+        .box-tip {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+            font-size: 20px;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* 验证弹窗样式 */
+        .verify-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 35px;
+            border-radius: 12px;
+            width: 420px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 18px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: #8B4513;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 8px rgba(139,69,19,0.2);
+        }
+        .submit-btn:hover {
+            background-color: #6D3C11;
+        }
+        /* 祝福页面通用样式 */
+        .blessing-page {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        /* 页面背景 */
+        #page1 { background-color: #bde0fe; }
+        #page2 { background-color: #5B9417; }
+        #page3 { 
+            background: url('https://img1.baidu.com/it/u=2545456789,1234567890&fm=253&fmt=auto&app=138&f=JPEG?w=500&h=700') no-repeat center center;
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        /* 祝福方框样式（基础） */
+        .blessing-box {
+            position: absolute;
+            border-radius: 10px;
+            padding: 8px 12px;
+            color: #333;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            animation: float 12s infinite linear;
+            transition: transform 0.2s;
+        }
+        .blessing-box:hover {
+            transform: scale(1.1);
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        /* 目标汉字样式 */
+        .target-char {
+            font-weight: bold;
+            font-size: 20px;
+            color: #2c3e50;
+            background-color: rgba(255,255,255,0.95);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        /* 竖排"前程似锦"容器 */
+        .vertical-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            gap: 100px;
+        }
+        .vertical-char {
+            display: flex;
+            flex-direction: column;
+            gap: 70px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 锁盒 -->
+    <div class="lock-box" id="lockBox">
+        <div class="box-tip">请点击盒子</div>
+    </div>
+
+    <!-- 验证弹窗 -->
+    <div class="verify-modal" id="verifyModal">
+        <div class="modal-content">
+            <div class="form-group">
+                <label for="nameInput">你是？（填全名）</label>
+                <input type="text" id="nameInput" placeholder="请输入你的全名">
+            </div>
+            <button class="submit-btn" id="submitBtn">提交验证</button>
+        </div>
+    </div>
+
+    <!-- 页面①：王议霆 -->
+    <div class="blessing-page" id="page1">
+        <div class="vertical-container">
+            <div class="vertical-char" id="col1"></div>
+            <div class="vertical-char" id="col2"></div>
+            <div class="vertical-char" id="col3"></div>
+            <div class="vertical-char" id="col4"></div>
+        </div>
+    </div>
+
+    <!-- 页面②：贾明瑶 -->
+    <div class="blessing-page" id="page2">
+        <div class="vertical-container">
+            <div class="vertical-char" id="col5"></div>
+            <div class="vertical-char" id="col6"></div>
+            <div class="vertical-char" id="col7"></div>
+            <div class="vertical-char" id="col8"></div>
+        </div>
+    </div>
+
+    <!-- 页面③：山松 -->
+    <div class="blessing-page" id="page3">
+        <div class="vertical-container">
+            <div class="vertical-char" id="col9"></div>
+            <div class="vertical-char" id="col10"></div>
+            <div class="vertical-char" id="col11"></div>
+            <div class="vertical-char" id="col12"></div>
+        </div>
+    </div>
+
+    <script>
+        // 元素获取
+        const lockBox = document.getElementById('lockBox');
+        const verifyModal = document.getElementById('verifyModal');
+        const nameInput = document.getElementById('nameInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+
+        // 祝福内容配置
+        const blessings = {
+            page1: [
+                "长长久久", "开开心心", "平安顺遂", "获得好成绩", "天天向上",
+                "逢考必过", "百毒不侵", "唯你明媚峥峥", "友谊常青", "四季平安",
+                "岁岁欢愉", "多爱自己", "诸事顺遂", "更加美丽", "照顾好自己"
+            ],
+            page2: [
+                "祝你追星成功", "平安顺遂", "拿捏地理", "四季平安", "不在感冒",
+                "百毒不侵", "心想事成", "万事顺意", "天天开心", "照顾好自己",
+                "好好吃饭", "更加美丽", "祝你能再长高", "友谊长存"
+            ],
+            page3: [
+                "友谊常青", "四季平安", "四季顺意", "昭昭如愿，顺遂安澜", "考上科大",
+                "考上空军", "拿捏成绩", "顺顺利利", "山高路远，顶峰相见"
+            ]
+        };
+
+        // 随机颜色数组（丰富色彩）
+        const boxColors = [
+            'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)',
+            'rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+            'rgba(231, 233, 237, 0.8)', 'rgba(108, 117, 125, 0.8)', 'rgba(220, 53, 69, 0.8)',
+            'rgba(25, 135, 84, 0.8)', 'rgba(2, 132, 199, 0.8)', 'rgba(107, 114, 128, 0.8)'
+        ];
+
+        // 点击锁盒打开弹窗
+        lockBox.addEventListener('click', () => {
+            verifyModal.style.display = 'flex';
+        });
+
+        // 提交验证
+        submitBtn.addEventListener('click', () => {
+            const name = nameInput.value.trim();
+            if (name === '王议霆') {
+                verifyModal.style.display = 'none';
+                page1.style.display = 'block';
+                createBlessingBoxes('page1', [col1, col2, col3, col4]);
+            } else if (name === '贾明瑶') {
+                verifyModal.style.display = 'none';
+                page2.style.display = 'block';
+                createBlessingBoxes('page2', [col5, col6, col7, col8]);
+            } else if (name === '山松') {
+                verifyModal.style.display = 'none';
+                page3.style.display = 'block';
+                createBlessingBoxes('page3', [col9, col10, col11, col12]);
+            } else {
+                alert('姓名输入错误，请重新输入');
+            }
+        });
+
+        // 创建666个随机样式方框
+        function createBlessingBoxes(pageKey, columns) {
+            const texts = blessings[pageKey];
+            const chars = ['前', '程', '似', '锦'];
+            const totalBoxes = 666;
+            const boxesPerCol = Math.floor(totalBoxes / columns.length);
+
+            columns.forEach((col, colIndex) => {
+                // 插入目标字符
+                const targetBox = document.createElement('div');
+                targetBox.className = 'blessing-box target-char';
+                targetBox.textContent = chars[colIndex];
+                col.appendChild(targetBox);
+
+                // 批量创建随机样式方框
+                const fragment = document.createDocumentFragment();
+                for (let i = 0; i < boxesPerCol - 1; i++) {
+                    const randomText = texts[Math.floor(Math.random() * texts.length)];
+                    const box = document.createElement('div');
+                    box.className = 'blessing-box';
+                    box.textContent = randomText;
+
+                    // 随机颜色
+                    const randomColor = boxColors[Math.floor(Math.random() * boxColors.length)];
+                    box.style.backgroundColor = randomColor;
+
+                    // 随机大小（字体8-14px，内边距6-12px）
+                    const randomFontSize = Math.floor(Math.random() * 7) + 8;
+                    const randomPadding = Math.floor(Math.random() * 7) + 6;
+                    box.style.fontSize = `${randomFontSize}px`;
+                    box.style.padding = `${randomPadding}px ${randomPadding + 4}px`;
+
+                    // 随机位置偏移和动画延迟
+                    box.style.marginLeft = `${Math.random() * 50 - 25}px`;
+                    box.style.animationDelay = `${Math.random() * 5}s`;
+
+                    fragment.appendChild(box);
+                }
+                col.appendChild(fragment);
+            });
+        }
+    </script>
+</body>
+</html>
